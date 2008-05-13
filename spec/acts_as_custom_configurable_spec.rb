@@ -53,6 +53,7 @@ describe 'A nice House' do
     @house.options.should_not be_nil
   end
 
+
   it "should have default story_count" do
     @house.options.story_count.should == 1
   end
@@ -62,6 +63,12 @@ describe 'A nice House' do
   it "should have default inhabited_state" do
     @house.options.inhabited.should be_false
   end
+  it "should throw exception if accessing undefined fields?" do
+    lambda do
+      @house.options.drill_instructor
+    end.should raise_error(NoMethodError)
+  end
+
 
   describe 'with four rooms' do
     before(:each) do

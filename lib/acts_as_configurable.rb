@@ -169,26 +169,53 @@ module ActsAsConfigurable
   end
 
   class OptionsProxy
+    attr_reader :items
     def initialize(record)
       @record = record
-      definitions_field = record.class.send(:acts_as_custom_configurable_options)[:defined_in]
-      @definitions = record.send(definitions_field)
-      values_field = record.class.send(:acts_as_custom_configurable_options)[:using]
-      @values = record.read_attribute(values_field) || {}
+      @definitions = record.send(conf[:defined_in])
+
+      @items = SettingsProxy.new do |c|
+        @definitions.each do |field_name, defi|
+          c.send(defi.first,field_name, :default => defi[1])
+        end
+      end.items.inject({}) {|h,i| h[i.name] = i; h}.with_indifferent_access
     end
 
-    def method_missing(method, *args)
-      key = method.to_sym
-      if method =~ /=$/
-        value = args.first
-        if @definitions.has_key?(key)
-          @values[key] = value
+    def values
+      @record.read_attribute(conf[:using]) || {}
+    end
+
+    def method_missing(method, *args, &block)
+      if method =~ /^(.*)=$/
+        name = $1
+        if item = items[name]
+          value = args.first
+          values[name] = value
+        else
+          raise NoMethodError, "no item '#{name}' found"
+        end
+      elsif method =~ /^(.*)?$/
+        name = $1
+        if item = items[name]
+          values[name].blank?
+        else
+          raise NoMethodError, "no item '#{name}' found"
         end
       else
-        if @definitions.has_key?(key)
-          @values[key] || @definitions[key].last
+        name = method
+        if item = items[name]
+          values[name] || item.default
+        else
+          raise NoMethodError, "no item '#{name}' found"
         end
       end
+    end
+
+
+    private
+
+    def conf
+      @record.class.send(:acts_as_custom_configurable_options)
     end
   end
 
