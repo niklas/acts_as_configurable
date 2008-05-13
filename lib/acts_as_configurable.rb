@@ -182,31 +182,48 @@ module ActsAsConfigurable
     end
 
     def values
-      @record.read_attribute(conf[:using]) || {}
+      f = conf[:using]
+      @record.write_attribute(f, {}) unless @record.read_attribute(f)
+      @record.read_attribute(f)
+    end
+
+    def values_from_association
+      if assoc = conf[:defined_by] 
+        foreign = @record.send(assoc)
+        foreign.send(foreign.class.acts_as_custom_configurable_options[:using]).values
+      else
+        nil
+      end
     end
 
     def method_missing(method, *args, &block)
-      if method =~ /^(.*)=$/
+      if method.to_s =~ /^(.*)=$/
         name = $1
         if item = items[name]
           value = args.first
           values[name] = value
         else
-          raise NoMethodError, "no item '#{name}' found"
+          raise NoMethodError, "no setter for '#{name}' found"
         end
-      elsif method =~ /^(.*)?$/
+      elsif method.to_s =~ /^(.*)\?$/
         name = $1
         if item = items[name]
           values[name].blank?
         else
-          raise NoMethodError, "no item '#{name}' found"
+          raise NoMethodError, "no predicate '#{name}' found"
         end
       else
-        name = method
+        name = method.to_s
         if item = items[name]
-          values[name] || item.default
+          if values.has_key?(name)
+            values[name]
+          elsif (va = values_from_association) && va.has_key?(name)
+            va[name]
+          else
+            item.default
+          end
         else
-          raise NoMethodError, "no item '#{name}' found"
+          raise NoMethodError, "no getter for '#{name}' found"
         end
       end
     end
@@ -269,8 +286,11 @@ module ActsAsConfigurable
     end
 
     def acts_as_custom_configurable(options = {})
-      options.symbolize_keys!.reverse_merge!(:using => :options)
-      options.symbolize_keys!.reverse_merge!(:defined_in => :defined_options)
+      options.symbolize_keys!
+      if assoc = options[:defined_by]
+        delegate (options[:defined_in] || :defined_options), :to => assoc.to_sym
+      end
+      options.reverse_merge!(:using => :options, :defined_in => :defined_options)
       write_inheritable_hash(:acts_as_custom_configurable_options, options)
       class_inheritable_reader(:acts_as_custom_configurable_options)
       serialize(acts_as_custom_configurable_options[:using], Hash)
