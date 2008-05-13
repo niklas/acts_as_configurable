@@ -1,3 +1,14 @@
+= ActsAsCustomConfigurable
+
+This plugin works does (nearly) the same as ActsAsConfigurable, with three exceptions:
+ * all the settings are accessible through Model#options
+ * you can define new settings for each instance of a model (using the serialized #defined_options)
+ * delegating the value lookup to a belongs_to/has_one association
+
+Please see spec/acts_as_custom_configurable_spec.rb
+
+The following is maybe outdated through the fork. Maybe not.
+
 = ActsAsConfigurable
 
 This plugin provides the ability to specify settings on a model class
