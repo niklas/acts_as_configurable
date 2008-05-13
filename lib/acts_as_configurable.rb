@@ -161,6 +161,37 @@ module ActsAsConfigurable
     end
   end
 
+  module InstanceMethods
+    def options
+      return @options if @options
+      @options = OptionsProxy.new(self)
+    end
+  end
+
+  class OptionsProxy
+    def initialize(record)
+      @record = record
+      definitions_field = record.class.send(:acts_as_custom_configurable_options)[:defined_in]
+      @definitions = record.send(definitions_field)
+      values_field = record.class.send(:acts_as_custom_configurable_options)[:using]
+      @values = record.read_attribute(values_field) || {}
+    end
+
+    def method_missing(method, *args)
+      key = method.to_sym
+      if method =~ /=$/
+        value = args.first
+        if @definitions.has_key?(key)
+          @values[key] = value
+        end
+      else
+        if @definitions.has_key?(key)
+          @values[key] || @definitions[key].last
+        end
+      end
+    end
+  end
+
   module ClassMethods
     # Defines an ActiveRecord class as configurable.  Passes a proxy object into
     # the given block, which is used to declare settings.
@@ -208,6 +239,16 @@ module ActsAsConfigurable
       serialize(acts_as_configurable_options[:using], Hash)
       extend(ActsMethods)
       SettingsProxy.new(&block).items.each { |item| add_setting_accessor(item) }
+    end
+
+    def acts_as_custom_configurable(options = {})
+      options.symbolize_keys!.reverse_merge!(:using => :options)
+      options.symbolize_keys!.reverse_merge!(:defined_in => :defined_options)
+      write_inheritable_hash(:acts_as_custom_configurable_options, options)
+      class_inheritable_reader(:acts_as_custom_configurable_options)
+      serialize(acts_as_custom_configurable_options[:using], Hash)
+      serialize(acts_as_custom_configurable_options[:defined_in], Hash)
+      include InstanceMethods
     end
   end
 end
