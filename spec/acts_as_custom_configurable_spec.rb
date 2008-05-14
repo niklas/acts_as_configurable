@@ -293,6 +293,7 @@ describe 'A nice House' do
   describe "editing in a Form spiced up with", ActsAsConfigurable::FormBuilder do
     before(:each) do
       @house
+      # TODO remove them
       extend ActionView::Helpers::TagHelper
       extend ActionView::Helpers::FormTagHelper
       @builder = ActionView::Helpers::FormBuilder.new(:house, @house, self, {}, nil)
@@ -304,10 +305,23 @@ describe 'A nice House' do
       @form.should_not be_empty
     end
 
-    it "should have a label and field for story_count" do
-      @form.should have_tag('li') do
-        with_tag('label')
-        with_tag('input')
+    it "should have a label and field for all the options defined by house" do
+      @form.should have_tag('ul#house_options') do
+        with_tag('li') do
+          with_tag('label')
+          with_tag('input#house_options_story_count[name=?][type=text]', 
+          'house[options][story_count]')
+        end
+        with_tag('li') do
+          with_tag('label')
+          with_tag('input#house_options_address[name=?][type=text]',
+          'house[options][address]')
+        end
+        with_tag('li') do
+          with_tag('label')
+          with_tag('input#house_options_inhabited[name=?][type=checkbox]', 
+          'house[options][inhabited]')
+        end
       end
     end
   end
