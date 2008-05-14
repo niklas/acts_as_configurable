@@ -1,34 +1,4 @@
-require "rubygems"
-require "activerecord"
-
-$:.unshift File.dirname(__FILE__) + "/../lib"
-require File.dirname(__FILE__) + "/../init"
-
-ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
-ActiveRecord::Migration.verbose = false
-ActiveRecord::Schema.define do
-  create_table(:houses) do |t|
-    t.string :label
-    t.text :options
-    t.text :defined_options
-  end
-  create_table(:rooms) do |t|
-    t.string :label
-    t.text :options
-    t.integer :house_id
-  end
-end
-
-class House < ActiveRecord::Base
-  has_many :rooms
-  acts_as_custom_configurable :using => :options
-end
-
-class Room < ActiveRecord::Base
-  belongs_to :house
-  acts_as_custom_configurable :using => :options, :defined_by => :house
-end
-
+require File.dirname(__FILE__) + '/spec_helper'
 describe 'A nice House' do
   before(:each) do
     @house = House.new(:label => 'Mulder Lane 23')
@@ -318,6 +288,28 @@ describe 'A nice House' do
       end
     end
 
+  end
+
+  describe "editing in a Form spiced up with", ActsAsConfigurable::FormBuilder do
+    before(:each) do
+      @house
+      extend ActionView::Helpers::TagHelper
+      extend ActionView::Helpers::FormTagHelper
+      @builder = ActionView::Helpers::FormBuilder.new(:house, @house, self, {}, nil)
+      lambda do
+        @form = @builder.select_options
+      end.should_not raise_error
+    end
+    it "should not be empty" do
+      @form.should_not be_empty
+    end
+
+    it "should have a label and field for story_count" do
+      @form.should have_tag('li') do
+        with_tag('label')
+        with_tag('input')
+      end
+    end
   end
 end
 
