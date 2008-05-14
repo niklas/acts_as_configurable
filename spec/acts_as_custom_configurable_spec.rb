@@ -124,6 +124,7 @@ describe 'A nice House' do
         @purple_room = @house.rooms.create(:label => 'purple')
         @red_room = @house.rooms.create(:label => 'red')
         @blue_room = @house.rooms.create(:label => 'blue')
+        @all_rooms = [@green_room, @purple_room, @red_room, @blue_room]
       end.should change(Room, :count).by(4)
     end
     it "should find the four rooms" do
@@ -217,6 +218,106 @@ describe 'A nice House' do
       end
 
     end
+    
+    describe "updating the house's options with a hash like in params" do
+      before(:each) do
+        @parms = {
+          :story_count => "3",
+          :address => 'Your Mums House',
+          :inhabited => "1"
+        }.with_indifferent_access
+        lambda do
+          @house.options = @parms
+          @house.save
+        end.should_not raise_error
+      end
+      it "should have the new story_count" do
+        @house.options.story_count.should == 3
+      end
+      it "should have the new address" do
+        @house.options.address.should == 'Your Mums House'
+      end
+      it "should have the new inhabited state" do
+        @house.options.inhabited.should be_true
+      end
+      it ", its rooms should have the new story_count" do
+        @all_rooms.each do |room|
+          room.options.story_count.should == 3
+        end
+      end
+      it ", its rooms should have the new address" do
+        @all_rooms.each do |room|
+          room.options.address.should == 'Your Mums House'
+        end
+      end
+      it ", its rooms should have the new inhabited state" do
+        @all_rooms.each do |room|
+          room.options.inhabited.should be_true
+        end
+      end
+
+      describe "moving the red room to hell" do
+        before(:each) do
+          @red_room.options.address = 'Hell'
+        end
+        it "should be there" do
+          @red_room.options.address.should == 'Hell'
+        end
+        it ", the house should stay at its place" do
+          @house.options.address.should == 'Your Mums House'
+        end
+
+        describe ", bringing it back" do
+          before(:each) do
+            @red_room.options.address = ""
+          end
+          it "should be back home" do
+            @red_room.options.address.should == 'Your Mums House'
+          end
+          it ", the house should stay at its place" do
+            @house.options.address.should == 'Your Mums House'
+          end
+        end
+      end
+    end
+
+    describe "updating the house's options with a sparse hash like in params" do
+      before(:each) do
+        @parms = {
+          :story_count => "3",
+          :inhabited => "false"
+        }.with_indifferent_access
+        lambda do
+          @house.options = @parms
+          @house.save
+        end.should_not raise_error
+      end
+      it "should have the new story_count" do
+        @house.options.story_count.should == 3
+      end
+      it "should have the old address" do
+        @house.options.address.should == 'no Address'
+      end
+      it "should have the new story_count" do
+        @house.options.inhabited.should be_false
+      end
+      it ", its rooms should have the new inhabited state" do
+        @all_rooms.each do |room|
+          room.options.story_count.should == 3
+        end
+      end
+      it ", its rooms should have the old address" do
+        @all_rooms.each do |room|
+          room.options.address.should == 'no Address'
+        end
+      end
+      it ", its rooms should have the new inhabited state" do
+        @all_rooms.each do |room|
+          room.options.inhabited.should be_false
+        end
+      end
+    end
+
   end
 end
 

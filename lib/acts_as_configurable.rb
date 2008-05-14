@@ -166,6 +166,12 @@ module ActsAsConfigurable
       return @options if @options
       @options = OptionsProxy.new(self)
     end
+    def options=(new_options)
+      options.each_item do |name,item|
+        new_val = new_options[name]
+        options[name] = new_val
+      end
+    end
   end
 
   class OptionsProxy
@@ -187,6 +193,12 @@ module ActsAsConfigurable
       @record.read_attribute(f)
     end
 
+    def each_item
+      @items.each do |name,item|
+        yield name, item
+      end
+    end
+
     def values_from_association
       if assoc = conf[:defined_by] 
         foreign = @record.send(assoc)
@@ -198,33 +210,37 @@ module ActsAsConfigurable
 
     def method_missing(method, *args, &block)
       if method.to_s =~ /^(.*)=$/
-        name = $1
-        if item = items[name]
-          value = args.first
-          values[name] = value
-        else
-          raise NoMethodError, "no setter for '#{name}' found"
-        end
+        self[$1] = args.first
       elsif method.to_s =~ /^(.*)\?$/
-        name = $1
-        if item = items[name]
-          values[name].blank?
+        self[$1].blank?
+      else
+        self[method.to_s]
+      end
+    end
+
+    def []=(name, arg)
+      if item = items[name]
+        if arg.blank?
+          values.delete(name)
         else
-          raise NoMethodError, "no predicate '#{name}' found"
+          values[name] = item.typecast arg
         end
       else
-        name = method.to_s
-        if item = items[name]
-          if values.has_key?(name)
-            values[name]
-          elsif (va = values_from_association) && va.has_key?(name)
-            va[name]
-          else
-            item.default
-          end
+        raise NoMethodError, "no setter for '#{name}' found"
+      end
+    end
+
+    def [](name)
+      if item = items[name]
+        if values.has_key?(name)
+          values[name]
+        elsif (va = values_from_association) && va.has_key?(name)
+          va[name]
         else
-          raise NoMethodError, "no getter for '#{name}' found"
+          item.default
         end
+      else
+        raise NoMethodError, "no getter for '#{name}' found"
       end
     end
 
