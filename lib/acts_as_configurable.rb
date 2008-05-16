@@ -100,6 +100,9 @@ module ActsAsConfigurable
       @name = name.to_s
       @default = options[:default]
     end
+    def type_to_s
+      self.class.to_s.underscore.split('_').first
+    end
     attr_reader :name, :default
 
     # No conversion is performed for objects.  Simply returns +value+.
@@ -163,12 +166,12 @@ module ActsAsConfigurable
 
   module InstanceMethods
     def options
-      return @options if @options
+      #return @options if @options
       @options = OptionsProxy.new(self)
     end
     def options=(new_options)
       options.each_item do |name,item|
-        new_val = new_options[name]
+        new_val = new_options[name] || new_options[name.to_sym]
         options[name] = new_val
       end
     end
@@ -183,7 +186,7 @@ module ActsAsConfigurable
       @items = SettingsProxy.new do |c|
         @definitions.each do |field_name, defi|
           c.send(defi.first,field_name, :default => defi[1])
-        end
+        end unless @definitions.blank?
       end.items.inject({}) {|h,i| h[i.name] = i; h}.with_indifferent_access
     end
 
@@ -191,6 +194,14 @@ module ActsAsConfigurable
       f = conf[:using]
       @record.write_attribute(f, {}) unless @record.read_attribute(f)
       @record.read_attribute(f)
+    end
+
+    def to_hash
+      values
+    end
+
+    def to_yaml
+      to_hash.to_yaml
     end
 
     def each_item
@@ -218,7 +229,8 @@ module ActsAsConfigurable
       end
     end
 
-    def []=(name, arg)
+    def []=(n, arg)
+      name = n.to_s
       if item = items[name]
         if arg.blank?
           values.delete(name)
@@ -230,7 +242,8 @@ module ActsAsConfigurable
       end
     end
 
-    def [](name)
+    def [](n)
+      name = n.to_s
       if item = items[name]
         if values.has_key?(name)
           values[name]

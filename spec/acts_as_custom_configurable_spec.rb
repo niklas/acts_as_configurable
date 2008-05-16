@@ -288,11 +288,45 @@ describe 'A nice House' do
       end
     end
 
+    describe "editing the red room in a Form spiced up with", ActsAsConfigurable::FormBuilder do
+      before(:each) do
+        # TODO remove them
+        extend ActionView::Helpers::TagHelper
+        extend ActionView::Helpers::FormTagHelper
+        @builder = ActionView::Helpers::FormBuilder.new(:room, @red_room, self, {}, nil)
+        lambda do
+          @form = @builder.select_options
+        end.should_not raise_error
+      end
+      it "should not be empty" do
+        @form.should_not be_empty
+      end
+
+      it "should have a label and field for all the options defined by house" do
+        @form.should have_tag('ul#room_options') do
+          with_tag('li') do
+            with_tag('label')
+            with_tag('input#room_options_story_count[name=?][type=text]', 
+            'room[options][story_count]')
+          end
+          with_tag('li') do
+            with_tag('label')
+            with_tag('input#room_options_address[name=?][type=text]',
+            'room[options][address]')
+          end
+          with_tag('li') do
+            with_tag('label')
+            with_tag('input#room_options_inhabited[name=?][type=checkbox]', 
+            'room[options][inhabited]')
+          end
+        end
+      end
+    end
+
   end
 
   describe "editing in a Form spiced up with", ActsAsConfigurable::FormBuilder do
     before(:each) do
-      @house
       # TODO remove them
       extend ActionView::Helpers::TagHelper
       extend ActionView::Helpers::FormTagHelper
@@ -321,6 +355,35 @@ describe 'A nice House' do
           with_tag('label')
           with_tag('input#house_options_inhabited[name=?][type=checkbox]', 
           'house[options][inhabited]')
+        end
+      end
+    end
+  end
+  describe "deifning in a Form spiced up with", ActsAsConfigurable::FormBuilder do
+    before(:each) do
+      # TODO remove them
+      extend ActionView::Helpers::TagHelper
+      extend ActionView::Helpers::FormTagHelper
+      extend ActionView::Helpers::FormOptionsHelper
+      @builder = ActionView::Helpers::FormBuilder.new(:house, @house, self, {}, nil)
+      lambda do
+        @form = @builder.define_options
+      end.should_not raise_error
+    end
+    it "should not be empty" do
+      @form.should_not be_empty
+    end
+
+    it "should have a all already defined options of house" do
+      @form.should have_tag('ul#house_defined_options') do
+        with_tag('li') do
+          with_tag('input[name=?][type=text]', 'house[defined_options][name][]')
+          with_tag('input[name=?][type=text]', 'house[defined_options][default][]')
+          with_tag('select[name=?]', 'house[defined_options][type][]') do
+            with_tag('option[value=?]', 'string')
+            with_tag('option[value=?]', 'integer')
+            with_tag('option[value=?]', 'boolean')
+          end
         end
       end
     end
