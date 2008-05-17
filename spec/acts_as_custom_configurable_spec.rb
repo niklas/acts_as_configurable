@@ -359,10 +359,12 @@ describe 'A nice House' do
       end
     end
   end
-  describe "deifning in a Form spiced up with", ActsAsConfigurable::FormBuilder do
+  describe "defining in a Form spiced up with", ActsAsConfigurable::FormBuilder do
     before(:each) do
       # TODO remove them
       extend ActionView::Helpers::TagHelper
+      extend ActionView::Helpers::PrototypeHelper
+      extend ActionView::Helpers::JavaScriptHelper
       extend ActionView::Helpers::FormTagHelper
       extend ActionView::Helpers::FormOptionsHelper
       @builder = ActionView::Helpers::FormBuilder.new(:house, @house, self, {}, nil)
@@ -388,6 +390,45 @@ describe 'A nice House' do
       end
     end
   end
+
 end
 
+describe "Defining opts of a house" do
+  before(:each) do
+    @house = House.new(:label => 'Skyscraper')
+    # defined in alphabetic order, since comparing is easier
+    @def_form = {
+      :name => %w(nickname public story_count),
+      :default => ["Tally", false, 42],
+      :type => %w(string boolean integer)
+    }.with_indifferent_access
+    @def_saved = {
+      'story_count' => ['integer', 42],
+      'nickname' => ['string', "Tally"],
+      'public' => ['boolean', false]
+    }
+  end
+  describe "from a Form" do
+    before(:each) do
+      @house.define_options = @def_form
+    end
+    it "should have the valid saved definitions" do
+      @house.defined_options.should == @def_saved
+    end
+    it "should have the valid form definitions" do
+      @house.define_options.should == @def_form
+    end
+  end
 
+  describe "from saved" do
+    before(:each) do
+      @house.defined_options = @def_saved
+    end
+    it "should have the valid form definitions" do
+      @house.define_options.should  == @def_form
+    end
+    it "should have the valid saved definitions" do
+      @house.defined_options.should == @def_saved
+    end
+  end
+end
