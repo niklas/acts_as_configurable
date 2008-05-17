@@ -27,14 +27,14 @@ module ActsAsConfigurable
 
     def define_option_item_fields(item)
       returning "" do |html|
-        html << @template.text_field_tag("#{@object_name}[defined_options][name][]", item.name)
+        html << @template.text_field_tag("#{@object_name}[define_options][name][]", item.name)
         html << option_type_selector(item)
-        html << @template.text_field_tag("#{@object_name}[defined_options][default][]", item.default)
+        html << @template.text_field_tag("#{@object_name}[define_options][default][]", item.default)
       end
     end
 
     def option_type_selector(item)
-      @template.select_tag("#{@object_name}[defined_options][type][]", option_type_option_group(item))
+      @template.select_tag("#{@object_name}[define_options][type][]", option_type_option_group(item))
     end
 
     def option_type_option_group(item)

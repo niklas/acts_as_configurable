@@ -379,9 +379,9 @@ describe 'A nice House' do
     it "should have a all already defined options of house" do
       @form.should have_tag('ul#house_defined_options') do
         with_tag('li') do
-          with_tag('input[name=?][type=text]', 'house[defined_options][name][]')
-          with_tag('input[name=?][type=text]', 'house[defined_options][default][]')
-          with_tag('select[name=?]', 'house[defined_options][type][]') do
+          with_tag('input[name=?][type=text]', 'house[define_options][name][]')
+          with_tag('input[name=?][type=text]', 'house[define_options][default][]')
+          with_tag('select[name=?]', 'house[define_options][type][]') do
             with_tag('option[value=?]', 'string')
             with_tag('option[value=?]', 'integer')
             with_tag('option[value=?]', 'boolean')
