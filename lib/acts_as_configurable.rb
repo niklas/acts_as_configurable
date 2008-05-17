@@ -221,8 +221,20 @@ module ActsAsConfigurable
       @record.read_attribute(f)
     end
 
+    def defaults
+      defs = {}
+      each_item do |name, item|
+        defs[name] = item.default
+      end
+      defs
+    end
+
     def to_hash
       values
+    end
+
+    def to_hash_with_defaults
+      defaults.merge(to_hash)
     end
 
     def to_yaml

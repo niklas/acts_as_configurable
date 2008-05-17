@@ -13,7 +13,7 @@ module ActsAsConfigurable
     def define_options
       list_dom = "#{@object_name}_defined_options"
       returning "" do |html|
-        html << %Q[<ul id="#{list_dom}" class="defining_options">]
+        html << %Q[<ul id="#{list_dom}" class="define_options">]
         @object.options.each_item do |item_name, item|
           html << @template.content_tag(:li, define_option_item_fields(item) )
         end
